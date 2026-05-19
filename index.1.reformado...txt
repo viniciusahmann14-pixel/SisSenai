@@ -46,7 +46,13 @@
 				</tr>
 				<tr>
 					<td>💲</td>
-					<td><strong>
+					<td><strong>Vendas:</strong>Registro de transações e orçamentos.</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+	<div class="card"style="margin-top:20px;">
 
 	</div>
 </body>
