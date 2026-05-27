@@ -51,7 +51,24 @@
   fetch('/listar-clientes')
     .then(res =>res.json())
     .then(clientes =>{
+      const corpoTabela = document.getElementByld('lista-clientes');
+      clientes.forEach(c =>{
+        corpoTabela.innerHTML +=`
+          </tr>
+            <td>${c.nome}</td>
+            <td>${c.cpf}</td>
+            <td>${c.telefone}</td>
+          </tr>`;
+      });
+    });
 </script>
-
+</body>
+<footer class="rodape">
+  <div class="container-rodape">
+    <p>&copy; 2026 SisSenai - Sistema de Gestão Educacional</p>
+    <p>Desenvolvido para fins didáticos - unidade SENAI Capanema/PR</p>
+  </div>
+</footer>
+</html>
 
     
