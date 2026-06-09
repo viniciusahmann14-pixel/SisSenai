@@ -52,7 +52,22 @@ paddimg: 10px 20px;">
           <th>Qtd</th>
           <th>Preço</th>
           <th>Subtotal</th>
-          
         </tr>
       </thead>
-    
+        <tbody></tbody>
+    </table>
+
+    <h3 id="txtTotal">Total: R$0,00</h3>
+    <button onclick="finalizarVendas()" style="background: gren;">Finalizar Venda</button>
+  </div>
+</div>
+
+<script>
+  let carrinho = []
+  let totalGeral = 0;
+  window.listaProdutos = [];
+
+  window.onload = () =>{
+    fetch('/listar-clientes').then(res.json()).the(data =>{
+      const
+</script>
