@@ -83,9 +83,51 @@
         const url = id ?`/alterar-cliente+${id}`:'/salvar-cliente';
         const metodo = id ? 'PUT':'POST';
 
-        fetch(url,{
-            method:metodo,
-            headers:{'Contebt-Type':'application/json'");
+        fetch(url, (
+            method: metodo,
+            headers: ('Content-Type': 'application/json'),
+            body: JSON.stringify(dados)
+        }).then(() =>(
+            alert(id? "Cliente alteradol": "Cliente salvol");
+            location.reload();
+
+// Função para Excluir | Acrescentar tudo
+
+        function excluirCliente(id) {
+            if (confirm("Deseja excluir este cliente?")) (
+                fetch(/excluir-cliente/${id)', ( method: 'DELETE' }) .then(() => carregarClientes());
+        }
+        }
+// Função para colocar dados no form para Editar | Acrescentar tudo
+
+            function prepararEdicao(id, nome, cpf, telefone) { 
+                const form = document.getElementByld('form-cliente');
+                form.dataset.id = id; // Guarda o ID no formulário form.nome.value = nome;
+                form.cpf.value = cpf;
+                form.nome.value = nome;
+                form.telefone.value = telefone;
+                
+    document.getElementByld('titulo-form').innerText = "Editar Cadastro";
+    const btn = document.getElementByld('btn-salvar');
+    btn.innerText = "Confirmar Alteração";
+    btn.style.background = "orange";
+            }
+carregarClientes();
+            </script>
+
+    ALTERAR O ARQUIVO SERVER.JS
+
+// * NOVA ROTA: Alterar cliente existente * | Acrescentar tudo
+app.put('/alterar-cliente/:id', (req, res) => {
+    const { id} = req.params;
+    const {nome, cpf, telefone} = req.body;
+    const sql = 'UPDATE clientes SET nome = ?, cpf = ?, telefone = ? WHERE id = ?`;
+    
+    db.run(sql, [nome, cpf, telefone, id], (err) => {
+        if (err) return res.status(500).json({ error: err.message }); res.json({ success: true })
+        res.json({ successs: true });
+    });
+});
     </script> 
 
     <footer class="rodape"> 
