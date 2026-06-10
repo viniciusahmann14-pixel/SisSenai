@@ -84,5 +84,17 @@ paddimg: 10px 20px;">
   function adicionarltem(){
     const pld = parselnt(document.getElementByld('selProduto').value);
     const qtd = parselnt(document.getElementByld('inpQtd').value);
+    const produto = window.listaProdutos.find(p =>p.id ===pld );
+
+    if (produto){
+      const subtotal = produto.preco * qtd;
+      carrinho.push({ id: produto.id, desc: produto.descricao, preco: produto.preco, qtd: qtd });
+      totalGeral += sudtotal;
+      atualizarGrade();
+    } else{
+      alert("Selecione um produto!");
+    }
+  }
+  
 </script>
   
