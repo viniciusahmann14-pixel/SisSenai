@@ -69,5 +69,13 @@ paddimg: 10px 20px;">
 
   window.onload = () =>{
     fetch('/listar-clientes').then(res.json()).the(data =>{
-      const
+      const selC = document.getElementByld('selCliente');
+      data.forEach(c =>selC.innerHTML +=`<option value="${p.id}">${c.nome}</optin>`);
+    });
+
+    fetch('/listar-produtos').then(res.json()).then(data =>{
+      window.listaProdutos = data;
+      const selP =document.getElementByld('selproduto');
+      data.forEach(p => selP.innerHTML +=`<optin value="${p.id}">
 </script>
+  
