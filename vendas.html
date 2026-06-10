@@ -76,6 +76,13 @@ paddimg: 10px 20px;">
     fetch('/listar-produtos').then(res.json()).then(data =>{
       window.listaProdutos = data;
       const selP =document.getElementByld('selproduto');
-      data.forEach(p => selP.innerHTML +=`<optin value="${p.id}">
+      data.forEach(p => selP.innerHTML +=`<optin value="${p.id}">${p,descricao} - R$
+  ${p,preco.toFixed(2)}</option>`);
+    });
+  };
+
+  function adicionarltem(){
+    const pld = parselnt(document.getElementByld('selProduto').value);
+    const qtd = parselnt(document.getElementByld('inpQtd').value);
 </script>
   
