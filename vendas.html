@@ -93,8 +93,14 @@ paddimg: 10px 20px;">
       atualizarGrade();
     } else{
       alert("Selecione um produto!");
+      
     }
   }
+function atualizarGrade(){
+  const corpo = document.querySelector('#tabelaitens tbody');
+  corpo.innerHTML ="";
+  carrinho.forEach(item =>{
+    corpo.innerHTML +=`<tr><td>R$ ${item.decs}</td><td>${item.qtd}</
   
 </script>
   
