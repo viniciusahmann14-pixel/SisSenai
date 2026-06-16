@@ -1,166 +1,128 @@
-const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
-const bodyParser = require('body-parser');
-const app = express();
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="estilo.css">
+    <title>SisSenai - Cadastro de Clientes</title>
+</head>
+<body>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="clientes.html">Clientes</a>
+        <a href="produtos.html">Estoque</a>
+        <a href="vendas.html">Vendas</a>
+    </nav>
 
-// Configurações do Servidor
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.json()); // Necessário para o carrinho de compras e atualizações (JSON)
-app.use(express.static('.')); // Serve seus arquivos HTML, CSS e imagens
+    <header class="banner">
+        <h1>Gestão de Clientes</h1>
+        <p>Cadastre e gerencie sua base de contatos</p>
+    </header>
 
-// Conexão com o Banco de Dados
-const db = new sqlite3.Database('./sissenai.db');
+    <div class="container">
+        <div class="card">
+            <h2 id="titulo-form">Novo Cadastro</h2>
+            <form id="form-cliente">
+                <input type="text" name="nome" placeholder="Nome do Cliente" required>
+                <input type="text" name="cpf" placeholder="CPF/CNPJ" required>
+                <input type="tel" name="telefone" placeholder="Telefone" required>
+                <button type="submit" id="btn-salvar">Salvar Cliente</button>
+            </form>
+        </div>
 
-// Inicialização das Tabelas (Cria apenas se não existirem)[cite: 2]
-db.serialize(() => {
-    // Tabela de Clientes
-    db.run(`CREATE TABLE IF NOT EXISTS clientes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        nome TEXT, 
-        cpf TEXT, 
-        telefone TEXT
-    )`);
+        <div class="card" style="margin-top: 20px;">
+            <h2>Clientes Cadastrados</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>CPF/CNPJ</th>
+                        <th>Telefone</th>
+                        <th>Ações</th> <!-- Coluna de Ações adicionada -->
+                    </tr>
+                </thead>
+                <tbody id="lista-clientes">
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-    // Tabela de Produtos (Estoque)
-    db.run(`CREATE TABLE IF NOT EXISTS produtos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        descricao TEXT, 
-        preco REAL, 
-        estoque INTEGER
-    )`);
+    <script>
+        // Função para carregar os clientes e desenhar os botões de ação
+        function carregarClientes() {
+            fetch('/listar-clientes')
+                .then(res => res.json())
+                .then(clientes => {
+                    const corpoTabela = document.getElementById('lista-clientes');
+                    corpoTabela.innerHTML = ''; 
+                    clientes.forEach(c => {
+                        corpoTabela.innerHTML += `
+                            <tr>
+                                <td>${c.nome}</td>
+                                <td>${c.cpf}</td>
+                                <td>${c.telefone}</td>
+                                <td>
+                                    <button onclick="prepararEdicao(${c.id}, '${c.nome}', '${c.cpf}', '${c.telefone}')" 
+                                        style="width:auto; background:orange; padding:5px 10px; margin-right:5px;">✏️</button>
+                                    <button onclick="excluirCliente(${c.id})" 
+                                        style="width:auto; background:red; padding:5px 10px;">🗑️</button>
+                                </td>
+                            </tr>`;
+                    });
+                });
+        }
 
-    // Tabela Mestre de Vendas
-    db.run(`CREATE TABLE IF NOT EXISTS vendas (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        cliente_id INTEGER, 
-        data TEXT, 
-        total REAL, 
-        FOREIGN KEY (cliente_id) REFERENCES clientes (id)
-    )`);
+        // Lógica para Salvar (Novo ou Edição)
+        document.getElementById('form-cliente').onsubmit = function(e) {
+            e.preventDefault();
+            const id = this.dataset.id; // Verifica se há um ID guardado para edição
+            const dados = {
+                nome: this.nome.value,
+                cpf: this.cpf.value,
+                telefone: this.telefone.value
+            };
 
-    // Tabela Detalhe de Itens da Venda
-    db.run(`CREATE TABLE IF NOT EXISTS itens_venda (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        venda_id INTEGER, 
-        produto_id INTEGER, 
-        quantidade INTEGER, 
-        preco_unitario REAL, 
-        FOREIGN KEY (venda_id) REFERENCES vendas (id), 
-        FOREIGN KEY (produto_id) REFERENCES produtos (id)
-    )`);
-});
+            const url = id ? `/alterar-cliente/${id}` : '/salvar-cliente';
+            const metodo = id ? 'PUT' : 'POST';
 
-// --- ROTAS DE CLIENTES ---
+            fetch(url, {
+                method: metodo,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dados)
+            }).then(() => {
+                alert(id ? "Cliente alterado!" : "Cliente salvo!");
+                location.reload();
+            });
+        };
 
-// Salvar novo cliente
-app.post('/salvar-cliente', (req, res) => {
-    const { nome, cpf, telefone } = req.body;
-    db.run(`INSERT INTO clientes (nome, cpf, telefone) VALUES (?, ?, ?)`, [nome, cpf, telefone], (err) => {
-        if (err) return res.status(500).send(err.message);
-        res.redirect('/clientes.html');
-    });
-});
+        // Função para Excluir
+        function excluirCliente(id) {
+            if (confirm("Deseja excluir este cliente?")) {
+                fetch(`/excluir-cliente/${id}`, { method: 'DELETE' })
+                    .then(() => carregarClientes());
+            }
+        }
 
-// Listar todos os clientes
-app.get('/listar-clientes', (req, res) => {
-    db.all("SELECT * FROM clientes", [], (err, rows) => {
-        if (err) return res.status(500).json(err);
-        res.json(rows);
-    });
-});
+        // Função para colocar dados no form para Editar
+        function prepararEdicao(id, nome, cpf, telefone) {
+            const form = document.getElementById('form-cliente');
+            form.dataset.id = id; // Guarda o ID no formulário
+            form.nome.value = nome;
+            form.cpf.value = cpf;
+            form.telefone.value = telefone;
 
-// *** NOVA ROTA: Alterar cliente existente ***
-app.put('/alterar-cliente/:id', (req, res) => {
-    const { id } = req.params;
-    const { nome, cpf, telefone } = req.body;
-    const sql = `UPDATE clientes SET nome = ?, cpf = ?, telefone = ? WHERE id = ?`;
-    
-    db.run(sql, [nome, cpf, telefone, id], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ success: true });
-    });
-});
+            document.getElementById('titulo-form').innerText = "Editar Cadastro";
+            const btn = document.getElementById('btn-salvar');
+            btn.innerText = "Confirmar Alteração";
+            btn.style.background = "orange";
+        }
 
-// *** NOVA ROTA: Excluir cliente ***
-app.delete('/excluir-cliente/:id', (req, res) => {
-    const { id } = req.params;
-    db.run(`DELETE FROM clientes WHERE id = ?`, [id], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ success: true });
-    });
-});
-
-
-// --- ROTAS DE PRODUTOS (ESTOQUE) ---
-app.post('/salvar-produto', (req, res) => {
-    const { descricao, preco, estoque } = req.body;
-    db.run(`INSERT INTO produtos (descricao, preco, estoque) VALUES (?, ?, ?)`, [descricao, preco, estoque], (err) => {
-        if (err) return res.status(500).send(err.message);
-        res.redirect('/produtos.html');
-    });
-});
-
-app.get('/listar-produtos', (req, res) => {
-    db.all("SELECT * FROM produtos", [], (err, rows) => {
-        if (err) return res.status(500).json(err);
-        res.json(rows);
-    });
-});
-
-// --- ROTAS DE VENDAS ---
-
-// Finalizar Venda (Grava Mestre e Detalhes)
-app.post('/finalizar-venda', (req, res) => {
-    const { cliente_id, total, itens } = req.body;
-    const data = new Date().toLocaleString('pt-BR');
-
-    db.run(`INSERT INTO vendas (cliente_id, data, total) VALUES (?, ?, ?)`, [cliente_id, data, total], function (err) {
-        if (err) return res.status(500).json(err);
-
-        const vendaId = this.lastID;
-        const stmt = db.prepare(`INSERT INTO itens_venda (venda_id, produto_id, quantidade, preco_unitario) VALUES (?, ?, ?, ?)`);
-
-        itens.forEach(item => {
-            stmt.run(vendaId, item.id, item.qtd, item.preco);
-        });
-
-        stmt.finalize();
-        res.json({ success: true });
-    });
-});
-
-// Listar todas as Vendas (Mestre)
-app.get('/listar-vendas', (req, res) => {
-    const sql = `
-        SELECT v.id, v.data, v.total, c.nome as nome_cliente 
-        FROM vendas v 
-        INNER JOIN clientes c ON v.cliente_id = c.id 
-        ORDER BY v.id DESC`;
-    db.all(sql, [], (err, rows) => {
-        if (err) return res.status(500).json(err);
-        res.json(rows);
-    });
-});
-
-// Listar itens de uma venda específica (Detalhe)
-app.get('/detalhes-venda/:id', (req, res) => {
-    const { id } = req.params;
-    const sql = `
-        SELECT i.*, p.descricao 
-        FROM itens_venda i 
-        INNER JOIN produtos p ON i.produto_id = p.id 
-        WHERE i.venda_id = ?`;
-
-    db.all(sql, [id], (err, rows) => {
-        if (err) return res.status(500).json(err);
-        res.json(rows);
-    });
-});
-
-// Iniciar Servidor
-const PORT = 3000;
-app.listen(PORT, () => {
-    console.log(`=========================================`);
-    console.log(`SISSENAI 1.0 - RODANDO EM: http://localhost:${PORT}`);
-    console.log(`=========================================`);
-});
+        carregarClientes();
+    </script>
+</body>
+<footer class="rodape">
+    <div class="container-rodape">
+        <p>&copy; 2026 SisSenai - Sistema de Gestão Educacional</p>
+        <p>Desenvolvido para fins didáticos - Unidade SENAI Capanema/PR</p>
+    </div>
+</footer>
+</html>
