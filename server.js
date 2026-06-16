@@ -5,13 +5,13 @@ const app = express();
 
 // Configurações do Servidor
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.json()); // Necessário para o carrinho de compras (JSON)
+app.use(express.json()); // Necessário para o carrinho de compras e atualizações (JSON)
 app.use(express.static('.')); // Serve seus arquivos HTML, CSS e imagens
 
 // Conexão com o Banco de Dados
 const db = new sqlite3.Database('./sissenai.db');
 
-// Inicialização das Tabelas (Cria apenas se não existirem)
+// Inicialização das Tabelas (Cria apenas se não existirem)[cite: 2]
 db.serialize(() => {
     // Tabela de Clientes
     db.run(`CREATE TABLE IF NOT EXISTS clientes (
@@ -51,6 +51,8 @@ db.serialize(() => {
 });
 
 // --- ROTAS DE CLIENTES ---
+
+// Salvar novo cliente
 app.post('/salvar-cliente', (req, res) => {
     const { nome, cpf, telefone } = req.body;
     db.run(`INSERT INTO clientes (nome, cpf, telefone) VALUES (?, ?, ?)`, [nome, cpf, telefone], (err) => {
@@ -59,6 +61,7 @@ app.post('/salvar-cliente', (req, res) => {
     });
 });
 
+// Listar todos os clientes
 app.get('/listar-clientes', (req, res) => {
     db.all("SELECT * FROM clientes", [], (err, rows) => {
         if (err) return res.status(500).json(err);
@@ -66,24 +69,27 @@ app.get('/listar-clientes', (req, res) => {
     });
 });
 
-// * NOVA ROTA: Alterar cliente existente * | Acrescentar tudo
+// *** NOVA ROTA: Alterar cliente existente ***
 app.put('/alterar-cliente/:id', (req, res) => {
-    const { id} = req.params;
-    const {nome, cpf, telefone} = req.body;
-    const sql = 'UPDATE clientes SET nome = ?, cpf = ?, telefone = ? WHERE id = ?`;
+    const { id } = req.params;
+    const { nome, cpf, telefone } = req.body;
+    const sql = `UPDATE clientes SET nome = ?, cpf = ?, telefone = ? WHERE id = ?`;
     
     db.run(sql, [nome, cpf, telefone, id], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ success: true })
-    });
-});
-    app.delete('/excluir-cliente/:id', (req,res) =>{
-    const {id } = req.params;
-    db.run(`DELETE FROM clientes WHERE id = ?`, [id], (err)=>{
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true });
     });
 });
+
+// *** NOVA ROTA: Excluir cliente ***
+app.delete('/excluir-cliente/:id', (req, res) => {
+    const { id } = req.params;
+    db.run(`DELETE FROM clientes WHERE id = ?`, [id], (err) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
+});
+
 
 // --- ROTAS DE PRODUTOS (ESTOQUE) ---
 app.post('/salvar-produto', (req, res) => {
@@ -114,35 +120,14 @@ app.post('/finalizar-venda', (req, res) => {
         const vendaId = this.lastID;
         const stmt = db.prepare(`INSERT INTO itens_venda (venda_id, produto_id, quantidade, preco_unitario) VALUES (?, ?, ?, ?)`);
 
-        //itens.forEach(item => {
-        //    stmt.run(vendaId, item.id, item.qtd, item.preco);
-        //});
-	itens.forEach(item => {
-
-    		// Grava item da venda
-    		stmt.run(
-        	vendaId,
-        	item.id,
-        	item.qtd,
-        	item.preco
-    		);
-
-    // Baixa estoque
-    	db.run(
-        	`
-        	UPDATE produtos
-        	SET estoque = estoque - ?
-        	WHERE id = ?
-        	`,
-        	[item.qtd, item.id]
-   	 	);
-	});
-
+        itens.forEach(item => {
+            stmt.run(vendaId, item.id, item.qtd, item.preco);
+        });
 
         stmt.finalize();
         res.json({ success: true });
-    	});
-	});
+    });
+});
 
 // Listar todas as Vendas (Mestre)
 app.get('/listar-vendas', (req, res) => {
@@ -172,12 +157,10 @@ app.get('/detalhes-venda/:id', (req, res) => {
     });
 });
 
-
-
 // Iniciar Servidor
 const PORT = 3000;
 app.listen(PORT, () => {
     console.log(`=========================================`);
-    console.log(`SISSENAI RODANDO EM: http://localhost:${PORT}`);
+    console.log(`SISSENAI 1.0 - RODANDO EM: http://localhost:${PORT}`);
     console.log(`=========================================`);
 });
